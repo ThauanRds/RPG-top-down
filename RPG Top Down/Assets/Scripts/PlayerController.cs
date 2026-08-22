@@ -40,14 +40,72 @@ public class PlayerController : MonoBehaviour
 
         anim.SetBool("isWalking", isMoving);
 
-        if(Input.GetButtonDown("Fire1"))
+        if(player.entity.attackTimer < 0)
+            player.entity.attackTimer = 0;
+        else
+            player.entity.attackTimer -= Time.deltaTime;
+
+        if (player.entity.attackTimer == 0 && !isMoving)
         {
-            anim.SetTrigger("Attack");
+            if (Input.GetButtonDown("Fire1"))
+            {
+                anim.SetTrigger("Attack");
+                player.entity.attackTimer = player.entity.cooldown;
+
+                Attack();
+            }
         }
     }
 
     private void FixedUpdate()
     {
         rb.MovePosition(rb.position + movement * player.entity.speed * Time.fixedDeltaTime);
+    }
+
+    void OnTriggerStay2D(Collider2D collider)
+    {
+        if(collider.transform.tag == "Enemy")
+        {
+            player.entity.target = collider.transform.gameObject;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collider)
+    {
+        if (collider.transform.tag == "Enemy")
+        {
+            player.entity.target = null;
+        }
+    }
+
+    void Attack()
+    {
+        if(player.entity.target == null)
+            return;
+
+        Monster monster = player.entity.target.GetComponent<Monster>();
+
+        if (monster.entity.dead)
+        {
+            player.entity.target = null;
+            return;
+        }
+
+        float distance = Vector2.Distance(transform.position, player.entity.target.transform.position);
+
+        if (distance <= player.entity.attackDistance)
+        {
+            int dmg = player.gameManager.CalculateDamage(player.entity, player.entity.damage);
+            int enemyDef = player.gameManager.CalculateDefense(monster.entity, monster.entity.defense);
+
+            int result = dmg - enemyDef;
+
+            if(result < 0)
+                result = 0;
+
+            Debug.Log("Seu ataque causou " + result + " de dano!");
+            monster.entity.currentHealth -= result;
+            monster.entity.target = this.gameObject;
+        }
     }
 }
