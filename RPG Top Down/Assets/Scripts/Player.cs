@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class Player : MonoBehaviour
 {
@@ -19,6 +20,13 @@ public class Player : MonoBehaviour
     public float regenMPTime = 10f;
     public int regenMPValue = 5;
 
+    [Header("Player Shortcuts")]
+    public KeyCode attributesKey = KeyCode.C;
+
+    [Header("Player UI Panels")]
+    public GameObject attributesPanel;
+
+
     [Header("Player UI")]
     public Slider healthSlider;
     public Slider manaSlider;
@@ -26,18 +34,34 @@ public class Player : MonoBehaviour
     public Slider expSlider;
     public TMP_Text expText;
     public TMP_Text levelText;
+    public TMP_Text strenghtText;
+    public TMP_Text resitenceText;
+    public TMP_Text inteligenceText;
+    public TMP_Text willpowerText;
+    public Button strenghtPositiveBtn;
+    public Button resitencePositiveBtn;
+    public Button inteligencePositiveBtn;
+    public Button willpowerPositiveBtn;
+    public Button strenghtNegativeBtn;
+    public Button resitenceNegativeBtn;
+    public Button inteligenceNegativeBtn;
+    public Button willpowerNegativeBtn;
+    public TMP_Text pointsText;
+
 
     [Header("EXP")]
     public int currentExp;
     public int expLeft;
     public int expBase;
     public float expMod;
+    public int givePoints = 5;
     public GameObject levelUpEffect;
     public AudioClip levelUpSound;
 
     [Header("Respawn")]
     public float respawnTime = 5f;
     public GameObject prefab;
+    
 
     // Start is called before the first frame update
     void Start()
@@ -74,6 +98,9 @@ public class Player : MonoBehaviour
         // Testando a regeneração de vida do jogador
         StartCoroutine(RegenHealth());
         StartCoroutine(RegenMana());
+
+        UpdateAttributesUI();
+        SetupUIButtons();
     }
 
     void Update()
@@ -86,13 +113,18 @@ public class Player : MonoBehaviour
             Die();
         }
 
+        if(Input.GetKeyDown(attributesKey))
+        {
+            attributesPanel.SetActive(!attributesPanel.activeSelf);
+        }
+
         healthSlider.value = entity.currentHealth;
         manaSlider.value = entity.currentMana;
         staminaSlider.value = entity.currentStamina;
 
         expSlider.value = currentExp;
         expSlider.maxValue = expLeft;
-        expText.text = string.Format("Exp: (0)/(1)", currentExp, expLeft);
+        expText.text = string.Format("Exp: {0}/{1}", currentExp, expLeft);
         levelText.text = entity.level.ToString();
     }
 
@@ -182,6 +214,8 @@ public class Player : MonoBehaviour
     {
         currentExp -= expLeft;
         entity.level++;
+        entity.points += givePoints;
+        UpdateAttributesUI();
 
         entity.currentHealth = entity.maxHealth;
 
@@ -190,6 +224,79 @@ public class Player : MonoBehaviour
 
         entity.entityAudio.PlayOneShot(levelUpSound);
         Instantiate(levelUpEffect, this.gameObject.transform);
+    }
+
+    public void UpdateAttributesUI()
+    {
+        strenghtText.text = entity.strenght.ToString();
+        resitenceText.text = entity.resistence.ToString();
+        inteligenceText.text = entity.intelligence.ToString();
+        willpowerText.text = entity.willPower.ToString();
+        pointsText.text = entity.points.ToString();
+    }
+
+    public void SetupUIButtons()
+    {
+        strenghtPositiveBtn.onClick.AddListener(() => AddPoints(0));
+        resitencePositiveBtn.onClick.AddListener(() => AddPoints(1));
+        inteligencePositiveBtn.onClick.AddListener(() => AddPoints(2));
+        willpowerPositiveBtn.onClick.AddListener(() => AddPoints(3));
+
+        strenghtNegativeBtn.onClick.AddListener(() => RemovePoints(0));
+        resitenceNegativeBtn.onClick.AddListener(() => RemovePoints(1));
+        inteligenceNegativeBtn.onClick.AddListener(() => RemovePoints(2));
+        willpowerNegativeBtn.onClick.AddListener(() => RemovePoints(3));
+    }
+
+    public void AddPoints(int index)
+    {
+        if(entity.points > 0)
+        {
+            if(index == 0)
+            {
+                entity.strenght++;
+            }
+            else if (index == 1)
+            {
+                entity.resistence++;
+            }
+            else if (index == 2)
+            {
+                entity.intelligence++;
+            }
+            else if (index == 3)
+            {
+                entity.willPower++;
+            }
+
+            entity.points--;
+            UpdateAttributesUI();
+        }
+    }
+
+    public void RemovePoints(int index)
+    {
+        if (entity.points > 0)
+        {
+            if (index == 0 && entity.strenght > 0)
+            {
+                entity.strenght--;
+            }
+            else if (index == 1 && entity.resistence > 0)
+            {
+                entity.resistence--;
+            }
+            else if (index == 2 && entity.intelligence > 0)
+            {
+                entity.intelligence--;
+            }
+            else if (index == 3 && entity.willPower > 0)
+            {
+                entity.willPower--;
+            }
+            entity.points++;
+            UpdateAttributesUI();
+        }
     }
 
 }
