@@ -16,6 +16,11 @@ public class PlayerController : MonoBehaviour
     private Vector2 movement = Vector2.zero;
     bool isMoving = false;
 
+    [Header("Interact")]
+    public KeyCode interactKey = KeyCode.E;
+    bool canTeleport = false;
+    Region tmpRegion;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -55,6 +60,11 @@ public class PlayerController : MonoBehaviour
                 Attack();
             }
         }
+
+        if(canTeleport && tmpRegion != null && Input.GetKeyDown(interactKey))
+        {
+            this.transform.position = tmpRegion.warpLocation.position;
+        }
     }
 
     private void FixedUpdate()
@@ -68,6 +78,12 @@ public class PlayerController : MonoBehaviour
         {
             player.entity.target = collider.transform.gameObject;
         }
+
+        if(collider.transform.tag == "Teleport")
+        {
+            canTeleport = true;
+            tmpRegion = collider.GetComponent<Teleport>().region;
+        }
     }
 
     void OnTriggerExit2D(Collider2D collider)
@@ -75,6 +91,12 @@ public class PlayerController : MonoBehaviour
         if (collider.transform.tag == "Enemy")
         {
             player.entity.target = null;
+        }
+
+        if (collider.transform.tag == "Teleport")
+        {
+            canTeleport = false;
+            tmpRegion = null;
         }
     }
 
